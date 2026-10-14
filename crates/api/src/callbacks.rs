@@ -153,9 +153,14 @@ pub async fn handle_bigbang(
         }
     };
 
-    let (kind, amount) = match &cmd {
-        WalletCommand::Move { kind, amount, .. } => (kind.as_str(), *amount),
-        _ => ("read", Money::ZERO),
+    let (kind, amount, round) = match &cmd {
+        WalletCommand::Move {
+            kind,
+            amount,
+            round,
+            ..
+        } => (kind.as_str(), *amount, round.clone()),
+        _ => ("read", Money::ZERO, None),
     };
 
     match state.store.apply(&cmd).await {
@@ -172,7 +177,10 @@ pub async fn handle_bigbang(
                 .finish_event(event_id, Some(true), label, None, outcome.journal_id)
                 .await;
             if outcome.applied {
-                state.publish(LiveEvent::from_outcome(&outcome, "bigbang", kind, amount));
+                state.publish(
+                    LiveEvent::from_outcome(&outcome, "bigbang", kind, amount)
+                        .with_round(round.as_ref()),
+                );
             }
             provider.render_reply(&raw, &CallbackOutcome::Ok(outcome))
         }

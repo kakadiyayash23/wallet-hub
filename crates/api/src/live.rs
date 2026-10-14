@@ -14,6 +14,8 @@ pub struct LiveEvent {
     pub source: String,
     pub kind: String,
     pub amount: Money,
+    pub round_id: Option<String>,
+    pub round_end: Option<bool>,
 }
 
 impl LiveEvent {
@@ -27,6 +29,16 @@ impl LiveEvent {
             source: source.to_string(),
             kind: kind.to_string(),
             amount,
+            round_id: None,
+            round_end: None,
         }
+    }
+
+    pub fn with_round(mut self, round: Option<&domain::RoundRef>) -> Self {
+        if let Some(r) = round {
+            self.round_id = Some(r.round_id.clone());
+            self.round_end = Some(r.round_end);
+        }
+        self
     }
 }
