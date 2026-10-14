@@ -20,7 +20,15 @@
     "games": "games",
     "empty": "No games yet. Ask the operator to sync the catalog.",
     "demo": "Demo",
-    "real": "Play"
+    "real": "Play",
+    "continue": "Continue playing",
+    "popular": "Popular now",
+    "seeAll": "See all",
+    "providers": "Providers",
+    "results": "results",
+    "clear": "Clear",
+    "noResults": "No games match that search.",
+    "tryAgain": "Try another name or clear the filter."
   },
   "play": {
     "back": "Back to lobby",
@@ -31,7 +39,11 @@
     "movements": "movements",
     "openRound": "open",
     "closedRound": "closed",
-    "net": "Net"
+    "net": "Net",
+    "last": "Last movement",
+    "trend": "Last 20 rounds",
+    "noRounds": "No rounds yet",
+    "noRoundsHint": "Spin in the game, or run the chaos simulator for this player on the Operator page."
   },
   "wallet": {
     "title": "Wallet",
@@ -50,7 +62,17 @@
     "pending_review": "awaiting review",
     "depositSuccess": "Payment received. The balance updates when the webhook arrives.",
     "topupSandbox": "Add 1,000 sandbox funds",
-    "depositCancel": "Deposit cancelled."
+    "depositCancel": "Deposit cancelled.",
+    "preset": "Quick amounts",
+    "stripeNote": "You will be sent to Stripe's secure checkout. Use card 4242 4242 4242 4242 in test mode.",
+    "waiting": "Waiting for Stripe to confirm the payment…",
+    "confirmed": "Deposit confirmed",
+    "waitLong": "Still waiting. The webhook can take a minute; the balance updates by itself.",
+    "noPayments": "No payments yet",
+    "noPaymentsHint": "Make a test deposit above.",
+    "noLedger": "No movements yet",
+    "noLedgerHint": "Deposits, bets and wins appear here.",
+    "sandboxHint": "A separate test balance. With a sandbox provider key, every game callback lands here and never touches real money."
   },
   "ledger": {
     "date": "Date",
@@ -101,7 +123,9 @@
     "tomorrow": "Tomorrow",
     "odds": "Odds",
     "oddsChanged": "Odds changed. Pick again.",
-    "placed": "Bet placed"
+    "placed": "Bet placed",
+    "noBets": "No bets yet",
+    "noBetsHint": "Pick a selection on the left and place a stake."
   },
   "ops": {
     "title": "Operator",
@@ -132,10 +156,28 @@
     "never": "never",
     "loggedIn": "Operator session active",
     "login": "Log in",
-    "badKey": "Wrong operator key"
+    "badKey": "Wrong operator key",
+    "dashboard": "Dashboard",
+    "timeline": "Callbacks, last 24 hours",
+    "request": "Request",
+    "reply": "Reply",
+    "journal": "Ledger journal",
+    "copy": "Copy",
+    "copied": "Copied",
+    "close": "Close",
+    "noJournal": "No ledger entry for this event",
+    "noEvents": "No callbacks yet",
+    "noEventsHint": "Run the chaos simulator or play a game."
   },
   "common": {
     "error": "Something went wrong",
     "loading": "Loading…"
+  },
+  "toast": {
+    "deposit": "Deposit of {amount} confirmed",
+    "betWon": "Bet won: {amount}",
+    "betLost": "Bet settled: lost",
+    "cashout": "Cashed out {amount}",
+    "win": "Win {amount}"
   }
 }

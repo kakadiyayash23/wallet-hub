@@ -20,7 +20,15 @@
     "games": "Spiele",
     "empty": "Noch keine Spiele. Der Betreiber muss den Katalog synchronisieren.",
     "demo": "Demo",
-    "real": "Spielen"
+    "real": "Spielen",
+    "continue": "Weiterspielen",
+    "popular": "Beliebt",
+    "seeAll": "Alle anzeigen",
+    "providers": "Anbieter",
+    "results": "Treffer",
+    "clear": "Zurücksetzen",
+    "noResults": "Keine Spiele passen zur Suche.",
+    "tryAgain": "Anderen Namen versuchen oder Filter zurücksetzen."
   },
   "play": {
     "back": "Zurück zur Lobby",
@@ -31,7 +39,11 @@
     "movements": "Bewegungen",
     "openRound": "offen",
     "closedRound": "geschlossen",
-    "net": "Netto"
+    "net": "Netto",
+    "last": "Letzte Bewegung",
+    "trend": "Letzte 20 Runden",
+    "noRounds": "Noch keine Runden",
+    "noRoundsHint": "Im Spiel drehen oder auf der Betreiberseite den Chaos-Simulator für diesen Spieler starten."
   },
   "wallet": {
     "title": "Konto",
@@ -50,7 +62,17 @@
     "pending_review": "in Prüfung",
     "depositSuccess": "Zahlung erhalten. Das Guthaben aktualisiert sich, sobald der Webhook eintrifft.",
     "topupSandbox": "1.000 Sandbox-Guthaben hinzufügen",
-    "depositCancel": "Einzahlung abgebrochen."
+    "depositCancel": "Einzahlung abgebrochen.",
+    "preset": "Schnellbeträge",
+    "stripeNote": "Du wirst zur sicheren Stripe-Kasse weitergeleitet. Testkarte 4242 4242 4242 4242.",
+    "waiting": "Warte auf die Bestätigung von Stripe…",
+    "confirmed": "Einzahlung bestätigt",
+    "waitLong": "Noch keine Bestätigung. Der Webhook kann eine Minute dauern; das Guthaben aktualisiert sich von selbst.",
+    "noPayments": "Noch keine Zahlungen",
+    "noPaymentsHint": "Mache oben eine Testeinzahlung.",
+    "noLedger": "Noch keine Bewegungen",
+    "noLedgerHint": "Einzahlungen, Einsätze und Gewinne erscheinen hier.",
+    "sandboxHint": "Ein getrenntes Testguthaben. Mit einem Sandbox-Anbieterschlüssel landet jeder Spiel-Callback hier und berührt nie echtes Geld."
   },
   "ledger": {
     "date": "Datum",
@@ -101,7 +123,9 @@
     "tomorrow": "Morgen",
     "odds": "Quote",
     "oddsChanged": "Quote geändert. Bitte neu wählen.",
-    "placed": "Wette platziert"
+    "placed": "Wette platziert",
+    "noBets": "Noch keine Wetten",
+    "noBetsHint": "Links eine Auswahl treffen und einen Einsatz platzieren."
   },
   "ops": {
     "title": "Betreiber",
@@ -132,10 +156,28 @@
     "never": "nie",
     "loggedIn": "Betreibersitzung aktiv",
     "login": "Anmelden",
-    "badKey": "Falscher Betreiberschlüssel"
+    "badKey": "Falscher Betreiberschlüssel",
+    "dashboard": "Übersicht",
+    "timeline": "Callbacks, letzte 24 Stunden",
+    "request": "Anfrage",
+    "reply": "Antwort",
+    "journal": "Hauptbuch-Eintrag",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "close": "Schließen",
+    "noJournal": "Kein Hauptbuch-Eintrag für dieses Ereignis",
+    "noEvents": "Noch keine Callbacks",
+    "noEventsHint": "Chaos-Simulator starten oder ein Spiel spielen."
   },
   "common": {
     "error": "Etwas ist schiefgelaufen",
     "loading": "Laden…"
+  },
+  "toast": {
+    "deposit": "Einzahlung von {amount} bestätigt",
+    "betWon": "Wette gewonnen: {amount}",
+    "betLost": "Wette abgerechnet: verloren",
+    "cashout": "{amount} ausgezahlt",
+    "win": "Gewinn {amount}"
   }
 }

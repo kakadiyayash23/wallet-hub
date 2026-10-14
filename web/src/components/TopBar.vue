@@ -20,7 +20,10 @@ async function logout() {
 
 <template>
   <header class="bar">
-    <RouterLink to="/lobby" class="logo">WALLET HUB</RouterLink>
+    <RouterLink to="/lobby" class="logo" aria-label="Wallet Hub">
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="var(--chip)"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="var(--accent-ink)" stroke-width="1.6" stroke-dasharray="3 2.2"/><circle cx="12" cy="12" r="2.4" fill="var(--accent-ink)"/></svg>
+      <span>Wallet<b>Hub</b></span>
+    </RouterLink>
     <nav class="row">
       <RouterLink to="/lobby">{{ t('nav.casino') }}</RouterLink>
       <RouterLink to="/sports">{{ t('nav.sports') }}</RouterLink>
@@ -41,9 +44,10 @@ async function logout() {
 </template>
 
 <style scoped>
-.bar { display: flex; align-items: center; gap: 14px; padding: 10px 20px; border-bottom: 1px solid var(--line); background: var(--surface); flex-wrap: wrap; position: sticky; top: 0; z-index: 5; }
-.logo { font-weight: 800; letter-spacing: .06em; color: var(--fg); }
-nav a { color: var(--fg); padding: 4px 8px; border-radius: 6px; }
+.bar { display: flex; align-items: center; gap: 14px; padding: 10px 22px; border-bottom: 1px solid var(--line); background: rgba(27,29,34,.92); backdrop-filter: blur(8px); flex-wrap: wrap; position: sticky; top: 0; z-index: 5; }
+.logo { display: inline-flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 600; font-size: 17px; color: var(--fg); letter-spacing: .01em; }
+.logo b { color: var(--accent); font-weight: 800; }
+nav a { color: var(--fg); padding: 5px 9px; border-radius: 7px; font-family: var(--display); font-weight: 500; }
 nav a.router-link-active { background: var(--surface-2); }
 .sp { flex: 1; }
 </style>
