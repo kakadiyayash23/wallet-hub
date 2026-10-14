@@ -1,0 +1,126 @@
+{
+  "nav": {
+    "casino": "Casino",
+    "sports": "Sport",
+    "wallet": "Konto",
+    "ops": "Betreiber",
+    "deposit": "Einzahlen",
+    "logout": "Abmelden"
+  },
+  "login": {
+    "title": "Demo betreten",
+    "name": "Anzeigename",
+    "locale": "Sprache",
+    "enter": "Weiter",
+    "hint": "Kein Passwort. Der Name wird zum Spieler-Token, das die Anbieter sehen."
+  },
+  "lobby": {
+    "search": "Spiele suchen",
+    "all": "Alle Anbieter",
+    "games": "Spiele",
+    "empty": "Noch keine Spiele. Der Betreiber muss den Katalog synchronisieren.",
+    "demo": "Demo",
+    "real": "Spielen"
+  },
+  "play": {
+    "back": "Zurück zur Lobby",
+    "rounds": "Laufende Runden",
+    "loading": "Spielsitzung wird gestartet…",
+    "balance": "Guthaben"
+  },
+  "wallet": {
+    "title": "Konto",
+    "available": "verfügbar",
+    "sandbox": "Sandbox",
+    "deposit": "Einzahlung",
+    "withdraw": "Auszahlung",
+    "amount": "Betrag",
+    "toStripe": "Weiter zu Stripe",
+    "request": "Anfordern",
+    "transactions": "Transaktionen",
+    "payments": "Zahlungen",
+    "pending": "ausstehend",
+    "completed": "abgeschlossen",
+    "failed": "fehlgeschlagen",
+    "pending_review": "in Prüfung",
+    "depositSuccess": "Zahlung erhalten. Das Guthaben aktualisiert sich, sobald der Webhook eintrifft.",
+    "topupSandbox": "1.000 Sandbox-Guthaben hinzufügen",
+    "depositCancel": "Einzahlung abgebrochen."
+  },
+  "ledger": {
+    "date": "Datum",
+    "kind": "Art",
+    "amount": "Betrag",
+    "balance": "Guthaben",
+    "source": "Quelle",
+    "env": "Umgebung",
+    "status": "Status",
+    "booked": "gebucht",
+    "rolled_back": "storniert"
+  },
+  "kind": {
+    "bet": "Einsatz",
+    "win": "Gewinn",
+    "refund": "Erstattung",
+    "net_round": "Runde",
+    "deposit": "Einzahlung",
+    "withdrawal": "Auszahlung",
+    "rollback": "Storno",
+    "tombstone": "Sperre",
+    "cashout": "Auszahlung Wette"
+  },
+  "sports": {
+    "title": "Sportwetten",
+    "slip": "Wettschein",
+    "stake": "Einsatz",
+    "return": "Möglicher Gewinn",
+    "place": "Wette platzieren",
+    "open": "Offene Wetten",
+    "cashout": "Auszahlen",
+    "pick": "Auswahl treffen",
+    "status": {
+      "open": "offen",
+      "won": "gewonnen",
+      "lost": "verloren",
+      "void": "ungültig",
+      "cashed_out": "ausgezahlt",
+      "rejected": "abgelehnt"
+    },
+    "upcoming": "Demnächst",
+    "noEvents": "Keine bevorstehenden Spiele für diese Sportart.",
+    "starts": "Beginn",
+    "draw": "Unentschieden",
+    "mySlip": "Deine Wetten",
+    "clear": "Leeren",
+    "today": "Heute",
+    "tomorrow": "Morgen",
+    "odds": "Quote",
+    "oddsChanged": "Quote geändert. Bitte neu wählen.",
+    "placed": "Wette platziert"
+  },
+  "ops": {
+    "title": "Betreiber",
+    "key": "Betreiberschlüssel",
+    "callbacks": "Callbacks",
+    "reconcile": "Abgleich",
+    "chaos": "Chaos",
+    "received": "empfangen (24h)",
+    "duplicates": "Duplikate ignoriert",
+    "rejected": "abgelehnt",
+    "errors": "Fehler",
+    "replay": "Erneut senden",
+    "view": "Ansehen",
+    "sync": "Katalog synchronisieren",
+    "run": "Starten",
+    "player": "Spieler",
+    "drift": "Abweichung",
+    "providerSays": "Anbieter meldet",
+    "ledgerSays": "Hauptbuch meldet",
+    "needKey": "Betreiberschlüssel eingeben, um Daten zu laden",
+    "needKeyHint": "Das ist der Wert OPS_API_KEY aus der .env-Datei. Der Schlüssel bleibt nur in diesem Browser."
+  },
+  "common": {
+    "error": "Etwas ist schiefgelaufen",
+    "loading": "Laden…"
+  }
+}

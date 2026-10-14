@@ -1,0 +1,126 @@
+{
+  "nav": {
+    "casino": "Casino",
+    "sports": "Sports",
+    "wallet": "Wallet",
+    "ops": "Operator",
+    "deposit": "Deposit",
+    "logout": "Log out"
+  },
+  "login": {
+    "title": "Enter the demo",
+    "name": "Display name",
+    "locale": "Language",
+    "enter": "Enter",
+    "hint": "No password. The name becomes the player token that providers see."
+  },
+  "lobby": {
+    "search": "Search games",
+    "all": "All providers",
+    "games": "games",
+    "empty": "No games yet. Ask the operator to sync the catalog.",
+    "demo": "Demo",
+    "real": "Play"
+  },
+  "play": {
+    "back": "Back to lobby",
+    "rounds": "Live rounds",
+    "loading": "Starting game session…",
+    "balance": "Balance"
+  },
+  "wallet": {
+    "title": "Wallet",
+    "available": "available",
+    "sandbox": "sandbox",
+    "deposit": "Deposit",
+    "withdraw": "Withdraw",
+    "amount": "Amount",
+    "toStripe": "Continue to Stripe",
+    "request": "Request",
+    "transactions": "Transactions",
+    "payments": "Payments",
+    "pending": "pending",
+    "completed": "completed",
+    "failed": "failed",
+    "pending_review": "awaiting review",
+    "depositSuccess": "Payment received. The balance updates when the webhook arrives.",
+    "topupSandbox": "Add 1,000 sandbox funds",
+    "depositCancel": "Deposit cancelled."
+  },
+  "ledger": {
+    "date": "Date",
+    "kind": "Type",
+    "amount": "Amount",
+    "balance": "Balance",
+    "source": "Source",
+    "env": "Env",
+    "status": "Status",
+    "booked": "booked",
+    "rolled_back": "rolled back"
+  },
+  "kind": {
+    "bet": "Bet",
+    "win": "Win",
+    "refund": "Refund",
+    "net_round": "Round",
+    "deposit": "Deposit",
+    "withdrawal": "Withdrawal",
+    "rollback": "Rollback",
+    "tombstone": "Tombstone",
+    "cashout": "Cash out"
+  },
+  "sports": {
+    "title": "Sportsbook",
+    "slip": "Bet slip",
+    "stake": "Stake",
+    "return": "Potential return",
+    "place": "Place bet",
+    "open": "Open bets",
+    "cashout": "Cash out",
+    "pick": "Pick a selection",
+    "status": {
+      "open": "open",
+      "won": "won",
+      "lost": "lost",
+      "void": "void",
+      "cashed_out": "cashed out",
+      "rejected": "rejected"
+    },
+    "upcoming": "Upcoming",
+    "noEvents": "No upcoming events for this sport.",
+    "starts": "Starts",
+    "draw": "Draw",
+    "mySlip": "Your bets",
+    "clear": "Clear",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "odds": "Odds",
+    "oddsChanged": "Odds changed. Pick again.",
+    "placed": "Bet placed"
+  },
+  "ops": {
+    "title": "Operator",
+    "key": "Operator key",
+    "callbacks": "Callbacks",
+    "reconcile": "Reconcile",
+    "chaos": "Chaos",
+    "received": "received (24h)",
+    "duplicates": "duplicates ignored",
+    "rejected": "rejected",
+    "errors": "errors",
+    "replay": "Replay",
+    "view": "View",
+    "sync": "Sync catalog",
+    "run": "Run",
+    "player": "Player",
+    "drift": "Drift",
+    "providerSays": "Provider says",
+    "ledgerSays": "Ledger says",
+    "needKey": "Enter the operator key to load data",
+    "needKeyHint": "It is the OPS_API_KEY value from the .env file. The key is kept in this browser only."
+  },
+  "common": {
+    "error": "Something went wrong",
+    "loading": "Loading…"
+  }
+}
