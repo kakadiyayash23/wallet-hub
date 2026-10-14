@@ -6,6 +6,7 @@ import type { Bet, Market, Selection, SportInfo } from '../api/types'
 import { useWallet } from '../stores/wallet'
 import { formatMinor, normalizeAmountInput } from '../lib/money'
 import StatusChip from '../components/StatusChip.vue'
+import EmptyState from '../components/EmptyState.vue'
 
 const { t, locale } = useI18n()
 const wallet = useWallet()
@@ -218,7 +219,7 @@ async function cashOut(b: Bet) {
             <button @click="cashOut(b)">{{ t('sports.cashout') }}</button>
           </div>
         </div>
-        <p v-if="openBets.length === 0" class="muted" style="margin:0">—</p>
+        <EmptyState v-if="openBets.length === 0" :title="t('sports.noBets')" :hint="t('sports.noBetsHint')" />
       </div>
 
       <div v-if="settledBets.length" class="card" style="margin-top:12px">
