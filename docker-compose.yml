@@ -1,0 +1,44 @@
+# Full stack. For day-to-day dev run only `docker compose up postgres`
+# and start api, mock-sportsbook and web from the shell (see README).
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: wallet
+      POSTGRES_PASSWORD: wallet
+      POSTGRES_DB: wallet_hub
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wallet -d wallet_hub"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: { context: ., target: api }
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://wallet:wallet@postgres:5432/wallet_hub
+      API_BIND: 0.0.0.0:8080
+      SPORTS_BASE_URL: http://mock-sportsbook:8090
+      WEB_ORIGINS: http://localhost:8000
+    ports: ["8080:8080"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  mock-sportsbook:
+    build: { context: ., target: mock-sportsbook }
+    env_file: .env
+    environment:
+      SPORTS_BIND: 0.0.0.0:8090
+      WALLET_CALLBACK_URL: http://api:8080/callbacks/sports
+    ports: ["8090:8090"]
+
+  web:
+    build: ./web
+    ports: ["8000:80"]
+    depends_on: [api]
+
+volumes:
+  pgdata: {}
