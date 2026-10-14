@@ -7,7 +7,7 @@ use axum::extract::{Path, Query, State};
 use axum::Json;
 use domain::traits::{GameProvider, ProviderHistoryRow};
 use domain::{AccountEnv, Money, PlayerId, Source};
-use ledger::events::{EventStats, InboundEvent};
+use ledger::events::{EventStats, InboundEvent, SourceHealth};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
@@ -34,6 +34,10 @@ pub async fn events(
             .events(q.limit.clamp(1, 500), q.source.as_deref())
             .await?,
     ))
+}
+
+pub async fn health(State(state): State<Shared>, _ops: Ops) -> ApiResult<Json<Vec<SourceHealth>>> {
+    Ok(Json(state.store.source_health().await?))
 }
 
 pub async fn event_stats(State(state): State<Shared>, _ops: Ops) -> ApiResult<Json<EventStats>> {

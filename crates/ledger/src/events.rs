@@ -21,6 +21,23 @@ pub struct InboundEvent {
     pub detail: Option<String>,
     pub journal_id: Option<Uuid>,
     pub replay_of: Option<Uuid>,
+    pub duration_ms: Option<i32>,
+}
+
+/// One row per provider for the operator health page.
+#[derive(Debug, Clone, Serialize, FromRow)]
+pub struct SourceHealth {
+    pub source: String,
+    pub received_24h: i64,
+    pub applied_24h: i64,
+    pub duplicates_24h: i64,
+    pub rejected_24h: i64,
+    pub errors_24h: i64,
+    pub last_success_at: Option<DateTime<Utc>>,
+    pub last_error_at: Option<DateTime<Utc>>,
+    pub last_error_detail: Option<String>,
+    pub avg_duration_ms: Option<f64>,
+    pub p95_duration_ms: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, FromRow)]
@@ -69,7 +86,10 @@ impl Store {
         journal_id: Option<Uuid>,
     ) -> Result<(), WalletError> {
         sqlx::query(
-            "update inbound_events set signature_ok = $2, outcome = $3, detail = $4, journal_id = $5 where id = $1",
+            r#"update inbound_events
+               set signature_ok = $2, outcome = $3, detail = $4, journal_id = $5,
+                   duration_ms = (extract(epoch from (now() - received_at)) * 1000)::int
+               where id = $1"#,
         )
         .bind(id)
         .bind(signature_ok)
@@ -117,6 +137,51 @@ impl Store {
                from inbound_events where received_at > now() - interval '24 hours'"#,
         )
         .fetch_one(&self.pool)
+        .await
+        .map_err(|e| anyhow::Error::from(e).into())
+    }
+}
+
+impl Store {
+    /// Per-source summary of the last 24 hours plus the last success and error ever.
+    pub async fn source_health(&self) -> Result<Vec<SourceHealth>, WalletError> {
+        sqlx::query_as::<_, SourceHealth>(
+            r#"with recent as (
+                 select * from inbound_events where received_at > now() - interval '24 hours'
+               ),
+               per_source as (
+                 select source,
+                        count(*)::bigint as received_24h,
+                        count(*) filter (where outcome in ('applied', 'read', 'ignored'))::bigint as applied_24h,
+                        count(*) filter (where outcome = 'duplicate')::bigint as duplicates_24h,
+                        count(*) filter (where outcome = 'rejected')::bigint as rejected_24h,
+                        count(*) filter (where outcome = 'error')::bigint as errors_24h,
+                        avg(duration_ms)::float8 as avg_duration_ms,
+                        percentile_cont(0.95) within group (order by duration_ms)::float8 as p95_duration_ms
+                 from recent group by source
+               ),
+               sources as (
+                 select distinct source from inbound_events
+               )
+               select s.source,
+                      coalesce(p.received_24h, 0) as received_24h,
+                      coalesce(p.applied_24h, 0) as applied_24h,
+                      coalesce(p.duplicates_24h, 0) as duplicates_24h,
+                      coalesce(p.rejected_24h, 0) as rejected_24h,
+                      coalesce(p.errors_24h, 0) as errors_24h,
+                      (select max(received_at) from inbound_events e
+                        where e.source = s.source and e.outcome in ('applied', 'duplicate', 'read', 'ignored')) as last_success_at,
+                      (select max(received_at) from inbound_events e
+                        where e.source = s.source and e.outcome in ('rejected', 'error')) as last_error_at,
+                      (select detail from inbound_events e
+                        where e.source = s.source and e.outcome in ('rejected', 'error')
+                        order by received_at desc limit 1) as last_error_detail,
+                      p.avg_duration_ms,
+                      p.p95_duration_ms
+               from sources s left join per_source p on p.source = s.source
+               order by s.source"#,
+        )
+        .fetch_all(&self.pool)
         .await
         .map_err(|e| anyhow::Error::from(e).into())
     }
