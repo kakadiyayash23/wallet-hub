@@ -5,7 +5,7 @@ use axum::extract::{Query, State};
 use axum::Json;
 use domain::traits::{GameProvider, LaunchMode, LaunchUrl};
 use domain::WalletError;
-use ledger::games::{CategoryCount, Game};
+use ledger::games::{CategoryCount, Game, Lobby};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -34,6 +34,10 @@ pub async fn list_games(
             .games(q.category.as_deref(), search, limit, q.offset.max(0))
             .await?,
     ))
+}
+
+pub async fn lobby(State(state): State<Shared>, Player(p): Player) -> ApiResult<Json<Lobby>> {
+    Ok(Json(state.store.lobby(p.id, 12).await?))
 }
 
 pub async fn categories(State(state): State<Shared>) -> ApiResult<Json<Vec<CategoryCount>>> {

@@ -286,6 +286,18 @@ impl Store {
         .map_err(|e| anyhow::Error::from(e).into())
     }
 
+    pub async fn journal(&self, id: Uuid) -> Result<Option<JournalView>, WalletError> {
+        sqlx::query_as::<_, JournalView>(
+            r#"select j.id, j.source, j.idempotency_key, j.kind, j.amount, j.round_id, j.round_end,
+                      j.reply_balance, j.rolled_back, a.env, a.currency, j.meta, j.created_at
+               from journals j join accounts a on a.id = j.account_id where j.id = $1"#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| anyhow::Error::from(e).into())
+    }
+
     /// Net amount a source moved for a player in one environment. Used by reconciliation.
     pub async fn net_by_source(
         &self,

@@ -7,7 +7,8 @@ use axum::extract::{Path, Query, State};
 use axum::Json;
 use domain::traits::{GameProvider, ProviderHistoryRow};
 use domain::{AccountEnv, Money, PlayerId, Source};
-use ledger::events::{EventStats, InboundEvent, SourceHealth};
+use ledger::events::{EventStats, InboundEvent, SourceHealth, TimelineBucket};
+use ledger::ledger::JournalView;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
@@ -38,6 +39,26 @@ pub async fn events(
 
 pub async fn health(State(state): State<Shared>, _ops: Ops) -> ApiResult<Json<Vec<SourceHealth>>> {
     Ok(Json(state.store.source_health().await?))
+}
+
+pub async fn timeline(
+    State(state): State<Shared>,
+    _ops: Ops,
+) -> ApiResult<Json<Vec<TimelineBucket>>> {
+    Ok(Json(state.store.timeline_24h().await?))
+}
+
+pub async fn journal(
+    State(state): State<Shared>,
+    _ops: Ops,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<JournalView>> {
+    state
+        .store
+        .journal(id)
+        .await?
+        .map(Json)
+        .ok_or_else(|| domain::WalletError::bad_request("journal not found").into())
 }
 
 pub async fn event_stats(State(state): State<Shared>, _ops: Ops) -> ApiResult<Json<EventStats>> {

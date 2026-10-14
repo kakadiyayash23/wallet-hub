@@ -22,6 +22,18 @@ pub struct InboundEvent {
     pub journal_id: Option<Uuid>,
     pub replay_of: Option<Uuid>,
     pub duration_ms: Option<i32>,
+    pub reply_status: Option<i32>,
+    pub reply_body: Option<serde_json::Value>,
+}
+
+/// One hour of callbacks split by outcome, for the operator chart.
+#[derive(Debug, Clone, Serialize, FromRow)]
+pub struct TimelineBucket {
+    pub hour: DateTime<Utc>,
+    pub applied: i64,
+    pub duplicates: i64,
+    pub rejected: i64,
+    pub errors: i64,
 }
 
 /// One row per provider for the operator health page.
@@ -143,6 +155,42 @@ impl Store {
 }
 
 impl Store {
+    pub async fn set_event_reply(
+        &self,
+        id: Uuid,
+        status: u16,
+        body: &serde_json::Value,
+    ) -> Result<(), WalletError> {
+        sqlx::query("update inbound_events set reply_status = $2, reply_body = $3 where id = $1")
+            .bind(id)
+            .bind(status as i32)
+            .bind(body)
+            .execute(&self.pool)
+            .await
+            .map_err(anyhow::Error::from)?;
+        Ok(())
+    }
+
+    /// The last 24 hours in hourly buckets, oldest first. Empty hours are included.
+    pub async fn timeline_24h(&self) -> Result<Vec<TimelineBucket>, WalletError> {
+        sqlx::query_as::<_, TimelineBucket>(
+            r#"with hours as (
+                 select generate_series(date_trunc('hour', now()) - interval '23 hours', date_trunc('hour', now()), interval '1 hour') as hour
+               )
+               select h.hour,
+                      count(e.id) filter (where e.outcome in ('applied', 'read', 'ignored'))::bigint as applied,
+                      count(e.id) filter (where e.outcome = 'duplicate')::bigint as duplicates,
+                      count(e.id) filter (where e.outcome = 'rejected')::bigint as rejected,
+                      count(e.id) filter (where e.outcome = 'error')::bigint as errors
+               from hours h
+               left join inbound_events e on date_trunc('hour', e.received_at) = h.hour
+               group by h.hour order by h.hour"#,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| anyhow::Error::from(e).into())
+    }
+
     /// Per-source summary of the last 24 hours plus the last success and error ever.
     pub async fn source_health(&self) -> Result<Vec<SourceHealth>, WalletError> {
         sqlx::query_as::<_, SourceHealth>(

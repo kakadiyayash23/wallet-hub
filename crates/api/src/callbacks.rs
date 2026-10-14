@@ -129,11 +129,29 @@ pub async fn handle_bigbang(
     raw: RawCallback,
     replay_of: Option<Uuid>,
 ) -> CallbackReply {
+    let mut last_event: Option<Uuid> = None;
+    let reply = bigbang_inner(state, raw, replay_of, &mut last_event).await;
+    if let Some(id) = last_event {
+        let _ = state
+            .store
+            .set_event_reply(id, reply.status, &reply.body)
+            .await;
+    }
+    reply
+}
+
+async fn bigbang_inner(
+    state: &AppState,
+    raw: RawCallback,
+    replay_of: Option<Uuid>,
+    last_event: &mut Option<Uuid>,
+) -> CallbackReply {
     let provider = state.bigbang.clone();
     let event_id = match record(state, "bigbang", &raw, replay_of).await {
         Ok(id) => id,
         Err(e) => return provider.render_error(&e),
     };
+    *last_event = Some(event_id);
 
     let cmd = match provider.parse_callback(&raw) {
         Ok(cmd) => cmd,
@@ -286,6 +304,23 @@ pub async fn handle_stripe(
     raw: RawCallback,
     replay_of: Option<Uuid>,
 ) -> CallbackReply {
+    let mut last_event: Option<Uuid> = None;
+    let reply = stripe_inner(state, raw, replay_of, &mut last_event).await;
+    if let Some(id) = last_event {
+        let _ = state
+            .store
+            .set_event_reply(id, reply.status, &reply.body)
+            .await;
+    }
+    reply
+}
+
+async fn stripe_inner(
+    state: &AppState,
+    raw: RawCallback,
+    replay_of: Option<Uuid>,
+    last_event: &mut Option<Uuid>,
+) -> CallbackReply {
     let event_id = match record(state, "stripe", &raw, replay_of).await {
         Ok(id) => id,
         Err(_) => {
@@ -295,6 +330,7 @@ pub async fn handle_stripe(
             }
         }
     };
+    *last_event = Some(event_id);
     let event = match state.stripe.parse_webhook(&raw) {
         Ok(ev) => ev,
         Err(e) => {
@@ -481,6 +517,23 @@ pub async fn handle_sports(
     raw: RawCallback,
     replay_of: Option<Uuid>,
 ) -> CallbackReply {
+    let mut last_event: Option<Uuid> = None;
+    let reply = sports_inner(state, raw, replay_of, &mut last_event).await;
+    if let Some(id) = last_event {
+        let _ = state
+            .store
+            .set_event_reply(id, reply.status, &reply.body)
+            .await;
+    }
+    reply
+}
+
+async fn sports_inner(
+    state: &AppState,
+    raw: RawCallback,
+    replay_of: Option<Uuid>,
+    last_event: &mut Option<Uuid>,
+) -> CallbackReply {
     let event_id = match record(state, "sports", &raw, replay_of).await {
         Ok(id) => id,
         Err(_) => {
@@ -490,6 +543,7 @@ pub async fn handle_sports(
             }
         }
     };
+    *last_event = Some(event_id);
     let event = match state.sports.parse_callback(&raw) {
         Ok(ev) => ev,
         Err(e) => {

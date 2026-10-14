@@ -25,6 +25,7 @@ pub fn router() -> Router<Shared> {
         // casino
         .route("/api/games", get(casino::list_games))
         .route("/api/games/categories", get(casino::categories))
+        .route("/api/games/lobby", get(casino::lobby))
         .route("/api/casino/launch", post(casino::launch))
         // wallet
         .route("/api/wallet", get(wallet::summary))
@@ -50,6 +51,8 @@ pub fn router() -> Router<Shared> {
         .route("/api/ops/events", get(ops::events))
         .route("/api/ops/events/stats", get(ops::event_stats))
         .route("/api/ops/health", get(ops::health))
+        .route("/api/ops/timeline", get(ops::timeline))
+        .route("/api/ops/journals/:id", get(ops::journal))
         .route("/api/ops/events/:id/replay", post(ops::replay))
         .route("/api/ops/reconcile/:player_id", get(ops::reconcile))
         .route("/api/ops/catalog/sync", post(ops::catalog_sync))
