@@ -16,6 +16,10 @@ pub struct Config {
     pub stripe_webhook_secret: String,
     pub sports_base_url: String,
     pub sports_callback_secret: String,
+    /// Signs session cookies. Random per boot when unset (sessions reset on restart).
+    pub session_secret: String,
+    /// Mark cookies Secure. Set true behind HTTPS.
+    pub cookie_secure: bool,
 }
 
 fn var(name: &str) -> anyhow::Result<String> {
@@ -48,6 +52,17 @@ impl Config {
             stripe_webhook_secret: var_or("STRIPE_WEBHOOK_SECRET", ""),
             sports_base_url: var_or("SPORTS_BASE_URL", "http://localhost:8090"),
             sports_callback_secret: var("SPORTS_CALLBACK_SECRET")?,
+            session_secret: match std::env::var("SESSION_SECRET") {
+                Ok(s) if s.len() >= 16 => s,
+                _ => {
+                    tracing::warn!(
+                        "SESSION_SECRET not set; using a random one, sessions reset on restart"
+                    );
+                    uuid::Uuid::new_v4().simple().to_string()
+                        + &uuid::Uuid::new_v4().simple().to_string()
+                }
+            },
+            cookie_secure: var_or("COOKIE_SECURE", "false") == "true",
         })
     }
 

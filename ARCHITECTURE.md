@@ -89,6 +89,10 @@ Replay (`POST /api/ops/events/:id/replay`) rebuilds the `RawCallback` from the r
 2. If the mock rejects, the api issues a `Rollback` for the stake and marks the bet `rejected`.
 3. The mock settles after a delay and POSTs a signed `BetEvent` to `/callbacks/sports`. Won → `Win +payout`, lost → `Win 0`, void → `Refund +stake`, all under key `settle:<ticket>`. Cash-out uses `cashout:<ticket>`.
 
+## Sessions
+
+`api/src/session.rs`: the cookie `wh_session` carries `hex(json).hex(hmac)` where the JSON holds the player id, an operator flag and an expiry, signed with `SESSION_SECRET`. No server-side session table. The cookie is HttpOnly and SameSite=Lax; `COOKIE_SECURE=true` adds Secure. Extractors: `Player` needs a session with a player id, `Ops` needs the operator flag or the `X-Ops-Key` header. The WebSocket upgrade reads the same cookie, so no id travels in the URL.
+
 ## Live updates
 
 `AppState.live` is a `tokio::sync::broadcast` channel. After any applied move, the handler publishes a `LiveEvent` (player, env, balance, amount, kind, source). `/ws?player_id=…` forwards matching events as JSON. The Pinia wallet store is the single source of truth for the balance pill.

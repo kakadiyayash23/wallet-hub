@@ -6,18 +6,16 @@ export class ApiError extends Error {
   }
 }
 
-let playerId: string | null = null
-let opsKey: string | null = null
-
-export function setPlayerId(id: string | null) { playerId = id }
-export function setOpsKey(key: string | null) { opsKey = key }
-
+/** The session is an HttpOnly cookie set by the api; the browser sends it on same-origin requests. */
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' }
   if (body !== undefined) headers['Content-Type'] = 'application/json'
-  if (playerId) headers['X-Player-Id'] = playerId
-  if (opsKey) headers['X-Ops-Key'] = opsKey
-  const res = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
+  const res = await fetch(path, {
+    method,
+    headers,
+    credentials: 'same-origin',
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
   const text = await res.text()
   const data = text ? JSON.parse(text) : null
   if (!res.ok) {

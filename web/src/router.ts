@@ -14,8 +14,9 @@ export const router = createRouter({
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const session = useSession()
+  await session.boot()
   if (to.path !== '/login' && to.path !== '/ops' && !session.player) return '/login'
   return true
 })

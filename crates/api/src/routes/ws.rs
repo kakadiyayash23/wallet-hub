@@ -1,22 +1,24 @@
+use crate::session;
 use crate::state::Shared;
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
-use axum::extract::{Query, State};
-use axum::response::Response;
+use axum::extract::State;
+use axum::http::{HeaderMap, StatusCode};
+use axum::response::{IntoResponse, Response};
 use domain::PlayerId;
-use serde::Deserialize;
-use uuid::Uuid;
 
-#[derive(Deserialize)]
-pub struct WsQuery {
-    pub player_id: Uuid,
-}
-
+/// Live balance updates for the logged-in player. The session cookie is sent
+/// with the upgrade request, so no id travels in the URL.
 pub async fn upgrade(
     ws: WebSocketUpgrade,
     State(state): State<Shared>,
-    Query(q): Query<WsQuery>,
+    headers: HeaderMap,
 ) -> Response {
-    ws.on_upgrade(move |socket| handle(socket, state, PlayerId(q.player_id)))
+    let pid =
+        session::from_headers(state.cfg.session_secret.as_bytes(), &headers).and_then(|s| s.pid);
+    let Some(pid) = pid else {
+        return (StatusCode::UNAUTHORIZED, "not logged in").into_response();
+    };
+    ws.on_upgrade(move |socket| handle(socket, state, PlayerId(pid)))
 }
 
 async fn handle(mut socket: WebSocket, state: Shared, player: PlayerId) {

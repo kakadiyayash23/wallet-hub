@@ -7,6 +7,7 @@ mod config;
 mod error;
 mod live;
 mod routes;
+mod session;
 mod state;
 
 use axum::http::{header, HeaderValue, Method};
@@ -77,9 +78,9 @@ async fn main() -> anyhow::Result<()> {
         .allow_headers([
             header::CONTENT_TYPE,
             header::AUTHORIZATION,
-            auth::PLAYER_HEADER,
             auth::OPS_HEADER,
-        ]);
+        ])
+        .allow_credentials(true);
 
     let app = Router::new()
         .merge(routes::router())

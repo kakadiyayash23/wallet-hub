@@ -26,7 +26,12 @@
     "back": "Zurück zur Lobby",
     "rounds": "Laufende Runden",
     "loading": "Spielsitzung wird gestartet…",
-    "balance": "Guthaben"
+    "balance": "Guthaben",
+    "round": "Runde",
+    "movements": "Bewegungen",
+    "openRound": "offen",
+    "closedRound": "geschlossen",
+    "net": "Netto"
   },
   "wallet": {
     "title": "Konto",
@@ -117,7 +122,17 @@
     "providerSays": "Anbieter meldet",
     "ledgerSays": "Hauptbuch meldet",
     "needKey": "Betreiberschlüssel eingeben, um Daten zu laden",
-    "needKeyHint": "Das ist der Wert OPS_API_KEY aus der .env-Datei. Der Schlüssel bleibt nur in diesem Browser."
+    "needKeyHint": "Das ist der Wert OPS_API_KEY aus der .env-Datei. Der Schlüssel bleibt nur in diesem Browser.",
+    "health": "Status",
+    "source": "Anbieter",
+    "received24": "empfangen 24h",
+    "lastSuccess": "letzter Erfolg",
+    "lastError": "letzter Fehler",
+    "latency": "Ø / p95 ms",
+    "never": "nie",
+    "loggedIn": "Betreibersitzung aktiv",
+    "login": "Anmelden",
+    "badKey": "Falscher Betreiberschlüssel"
   },
   "common": {
     "error": "Etwas ist schiefgelaufen",

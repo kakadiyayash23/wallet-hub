@@ -1,6 +1,8 @@
-//! Demo auth. The player app sends `X-Player-Id` after a dev login; the
-//! operator app sends `X-Ops-Key`. A real platform puts sessions here.
+//! Extractors. A player needs a session cookie with a player id. The operator
+//! role comes from the same cookie after `POST /api/ops/login`, or from the
+//! `X-Ops-Key` header for scripts.
 
+use crate::session;
 use crate::state::Shared;
 use axum::async_trait;
 use axum::extract::FromRequestParts;
@@ -11,12 +13,13 @@ use axum::Json;
 use domain::traits::PlayerRef;
 use domain::PlayerId;
 use serde_json::json;
-use uuid::Uuid;
 
-pub const PLAYER_HEADER: HeaderName = HeaderName::from_static("x-player-id");
 pub const OPS_HEADER: HeaderName = HeaderName::from_static("x-ops-key");
 
 pub struct Player(pub PlayerRef);
+
+/// The raw session, if the cookie is valid. Never fails.
+pub struct MaybeSession(pub Option<session::Session>);
 
 fn unauthorized(msg: &str) -> Response {
     (
@@ -27,6 +30,21 @@ fn unauthorized(msg: &str) -> Response {
 }
 
 #[async_trait]
+impl FromRequestParts<Shared> for MaybeSession {
+    type Rejection = Response;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &Shared,
+    ) -> Result<Self, Self::Rejection> {
+        Ok(MaybeSession(session::from_headers(
+            state.cfg.session_secret.as_bytes(),
+            &parts.headers,
+        )))
+    }
+}
+
+#[async_trait]
 impl FromRequestParts<Shared> for Player {
     type Rejection = Response;
 
@@ -34,15 +52,12 @@ impl FromRequestParts<Shared> for Player {
         parts: &mut Parts,
         state: &Shared,
     ) -> Result<Self, Self::Rejection> {
-        let raw = parts
-            .headers
-            .get(&PLAYER_HEADER)
-            .and_then(|v| v.to_str().ok())
-            .ok_or_else(|| unauthorized("missing X-Player-Id"))?;
-        let id = Uuid::parse_str(raw).map_err(|_| unauthorized("X-Player-Id is not a uuid"))?;
+        let sess = session::from_headers(state.cfg.session_secret.as_bytes(), &parts.headers)
+            .ok_or_else(|| unauthorized("not logged in"))?;
+        let pid = sess.pid.ok_or_else(|| unauthorized("not logged in"))?;
         let player = state
             .store
-            .player_by_id(PlayerId(id))
+            .player_by_id(PlayerId(pid))
             .await
             .map_err(|_| unauthorized("unknown player"))?;
         Ok(Player(player))
@@ -59,6 +74,13 @@ impl FromRequestParts<Shared> for Ops {
         parts: &mut Parts,
         state: &Shared,
     ) -> Result<Self, Self::Rejection> {
+        if let Some(sess) =
+            session::from_headers(state.cfg.session_secret.as_bytes(), &parts.headers)
+        {
+            if sess.ops {
+                return Ok(Ops);
+            }
+        }
         let key = parts
             .headers
             .get(&OPS_HEADER)
@@ -69,7 +91,7 @@ impl FromRequestParts<Shared> for Ops {
         {
             Ok(Ops)
         } else {
-            Err(unauthorized("missing or wrong X-Ops-Key"))
+            Err(unauthorized("operator login required"))
         }
     }
 }

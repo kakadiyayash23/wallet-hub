@@ -26,7 +26,12 @@
     "back": "Back to lobby",
     "rounds": "Live rounds",
     "loading": "Starting game session…",
-    "balance": "Balance"
+    "balance": "Balance",
+    "round": "Round",
+    "movements": "movements",
+    "openRound": "open",
+    "closedRound": "closed",
+    "net": "Net"
   },
   "wallet": {
     "title": "Wallet",
@@ -117,7 +122,17 @@
     "providerSays": "Provider says",
     "ledgerSays": "Ledger says",
     "needKey": "Enter the operator key to load data",
-    "needKeyHint": "It is the OPS_API_KEY value from the .env file. The key is kept in this browser only."
+    "needKeyHint": "It is the OPS_API_KEY value from the .env file. The key is kept in this browser only.",
+    "health": "Health",
+    "source": "Provider",
+    "received24": "received 24h",
+    "lastSuccess": "last success",
+    "lastError": "last error",
+    "latency": "avg / p95 ms",
+    "never": "never",
+    "loggedIn": "Operator session active",
+    "login": "Log in",
+    "badKey": "Wrong operator key"
   },
   "common": {
     "error": "Something went wrong",

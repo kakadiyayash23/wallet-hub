@@ -12,9 +12,11 @@ export interface SportInfo { key: string; label: string; count: number }
 export interface Selection { key: string; label: string; odds_milli: number }
 export interface Market { event_id: string; sport: string; league: string; home: string; away: string; starts_at: string; selections: Selection[] }
 export interface Bet { id: string; ticket_ref: string | null; event_name: string; market: string; selection: string; stake: number; odds_milli: number; currency: string; status: string; payout: number | null; created_at: string; settled_at: string | null }
-export interface InboundEvent { id: string; source: string; received_at: string; method: string; path: string; headers: Record<string, string>; body: string; signature_ok: boolean | null; outcome: string; detail: string | null; journal_id: string | null; replay_of: string | null }
+export interface InboundEvent { id: string; source: string; received_at: string; method: string; path: string; headers: Record<string, string>; body: string; signature_ok: boolean | null; outcome: string; detail: string | null; journal_id: string | null; replay_of: string | null; duration_ms: number | null }
 export interface EventStats { received: number; duplicates: number; rejected: number; errors: number }
-export interface LiveEvent { player_id: string; env: 'live' | 'sandbox'; currency: string; balance: number; journal_id: string | null; source: string; kind: string; amount: number }
+export interface LiveEvent { player_id: string; env: 'live' | 'sandbox'; currency: string; balance: number; journal_id: string | null; source: string; kind: string; amount: number; round_id: string | null; round_end: boolean | null }
 export interface ChaosReport { rounds: number; sent: number; duplicates_sent: number; duplicates_rejected: number; bad_signatures_sent: number; bad_signatures_rejected: number; http_errors: number; start_balance: number; expected_balance: number; final_balance: number; drift: number; trial_balance: number; elapsed_ms: number }
 export interface Reconciliation { player_id: string; env: string; provider_net: number; ledger_net: number; drift: number; provider_rows: number; rows: { external_id: string; game: string; bet: number; win: number; at: string }[] }
 export interface ApiErrorBody { error: { code: string; message: string; balance?: number } }
+export interface Whoami { player: Player | null; ops: boolean }
+export interface SourceHealth { source: string; received_24h: number; applied_24h: number; duplicates_24h: number; rejected_24h: number; errors_24h: number; last_success_at: string | null; last_error_at: string | null; last_error_detail: string | null; avg_duration_ms: number | null; p95_duration_ms: number | null }

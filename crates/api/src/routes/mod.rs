@@ -19,6 +19,9 @@ pub fn router() -> Router<Shared> {
             "/api/players/me",
             get(players::me).patch(players::update_me),
         )
+        .route("/api/auth/whoami", get(players::whoami))
+        .route("/api/auth/logout", post(players::logout))
+        .route("/api/ops/login", post(players::ops_login))
         // casino
         .route("/api/games", get(casino::list_games))
         .route("/api/games/categories", get(casino::categories))
@@ -46,6 +49,7 @@ pub fn router() -> Router<Shared> {
         // operator
         .route("/api/ops/events", get(ops::events))
         .route("/api/ops/events/stats", get(ops::event_stats))
+        .route("/api/ops/health", get(ops::health))
         .route("/api/ops/events/:id/replay", post(ops::replay))
         .route("/api/ops/reconcile/:player_id", get(ops::reconcile))
         .route("/api/ops/catalog/sync", post(ops::catalog_sync))

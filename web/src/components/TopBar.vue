@@ -12,8 +12,8 @@ const router = useRouter()
 async function onLocale(e: Event) {
   await session.changeLocale((e.target as HTMLSelectElement).value as Locale)
 }
-function logout() {
-  session.logout()
+async function logout() {
+  await session.logout()
   router.push('/login')
 }
 </script>

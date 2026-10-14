@@ -1,28 +1,37 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { api, setPlayerId } from '../api/client'
-import type { Player } from '../api/types'
+import { api } from '../api/client'
+import type { Player, Whoami } from '../api/types'
 import { setLocale, type Locale } from '../i18n'
 
-const KEY = 'wallet-hub.player'
-
-function load(): Player | null {
-  try { return JSON.parse(localStorage.getItem(KEY) ?? 'null') } catch { return null }
-}
-
+/** Who is logged in. The truth lives in the session cookie; this store mirrors it. */
 export const useSession = defineStore('session', () => {
-  const player = ref<Player | null>(load())
-  if (player.value) {
-    setPlayerId(player.value.id)
-    setLocale(player.value.locale as Locale)
+  const player = ref<Player | null>(null)
+  const ops = ref(false)
+  let booted: Promise<void> | null = null
+
+  /** Ask the api who the cookie belongs to. Called once before routing. */
+  function boot(): Promise<void> {
+    if (!booted) {
+      booted = api
+        .get<Whoami>('/api/auth/whoami')
+        .then((w) => {
+          player.value = w.player
+          ops.value = w.ops
+          if (w.player) setLocale(w.player.locale as Locale)
+        })
+        .catch(() => {
+          player.value = null
+          ops.value = false
+        })
+    }
+    return booted
   }
 
   async function login(displayName: string, locale: Locale) {
     const p = await api.post<Player>('/api/players', { display_name: displayName, locale })
     player.value = p
-    setPlayerId(p.id)
     setLocale(p.locale as Locale)
-    try { localStorage.setItem(KEY, JSON.stringify(p)) } catch { /* private mode */ }
   }
 
   async function changeLocale(locale: Locale) {
@@ -30,14 +39,18 @@ export const useSession = defineStore('session', () => {
     const p = await api.patch<Player>('/api/players/me', { locale })
     player.value = p
     setLocale(locale)
-    try { localStorage.setItem(KEY, JSON.stringify(p)) } catch { /* ignore */ }
   }
 
-  function logout() {
+  async function opsLogin(key: string) {
+    await api.post('/api/ops/login', { key })
+    ops.value = true
+  }
+
+  async function logout() {
+    try { await api.post('/api/auth/logout') } catch { /* cookie may already be gone */ }
     player.value = null
-    setPlayerId(null)
-    try { localStorage.removeItem(KEY) } catch { /* ignore */ }
+    ops.value = false
   }
 
-  return { player, login, changeLocale, logout }
+  return { player, ops, boot, login, changeLocale, opsLogin, logout }
 })

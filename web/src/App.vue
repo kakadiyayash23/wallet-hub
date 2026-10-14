@@ -16,7 +16,7 @@ function start() {
   disconnect = null
   if (!session.player) return
   wallet.refresh().catch(() => {})
-  disconnect = connectLive(session.player.id, (ev) => wallet.applyLive(ev))
+  disconnect = connectLive((ev) => wallet.applyLive(ev))
 }
 
 onMounted(start)

@@ -14,10 +14,11 @@ say "health"
 curl -fsS "$API/api/health" >/dev/null && echo ok
 
 say "dev login"
-PLAYER=$(curl -fsS -X POST "$API/api/players" -H 'content-type: application/json' -d '{"display_name":"Smoke Tester","locale":"de"}')
+JAR=$(mktemp); trap 'rm -f "$JAR"' EXIT
+PLAYER=$(curl -fsS -c "$JAR" -X POST "$API/api/players" -H 'content-type: application/json' -d '{"display_name":"Smoke Tester","locale":"de"}')
 PID=$(echo "$PLAYER" | jq -r .id); TOKEN=$(echo "$PLAYER" | jq -r .external_token)
-echo "player $PID token $TOKEN"
-H=(-H "X-Player-Id: $PID" -H 'content-type: application/json')
+echo "player $PID token $TOKEN (session cookie saved)"
+H=(-b "$JAR" -H 'content-type: application/json')
 O=(-H "X-Ops-Key: $OPS_API_KEY" -H 'content-type: application/json')
 
 say "wallet summary creates both accounts"
@@ -72,6 +73,9 @@ curl -fsS "$API/api/sports/bets" "${H[@]}" | jq -c '.[0] | {status, payout}'
 
 say "withdrawal reserves at once"
 curl -fsS -X POST "$API/api/wallet/withdrawals" "${H[@]}" -d '{"amount":"5.00"}' | jq -c '{status, amount}'
+
+say "ops: health"
+curl -fsS "$API/api/ops/health" "${O[@]}" | jq -c '.[] | {source, received_24h, last_error_detail}'
 
 say "ops: chaos 100 rounds"
 CH=$(curl -fsS -X POST "$API/api/ops/chaos" "${O[@]}" -d "{\"player_id\":\"$PID\",\"rounds\":100,\"duplicate_every\":4,\"bad_signature_every\":9}")
