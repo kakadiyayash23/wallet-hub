@@ -34,7 +34,8 @@ Copy `.env.example` to `.env` and fill these in:
 | `BIGBANG_API_KEY` | BigBang portal → API keys. Use the `ek_test_` sandbox key |
 | `STRIPE_SECRET_KEY` | Stripe Dashboard → Developers → API keys (test mode) |
 | `STRIPE_WEBHOOK_SECRET` | Printed by the `stripe listen` command in the run steps below |
-| `OPS_API_KEY` | Any long random string. The operator page asks for it |
+| `OPS_API_KEY` | Any long random string. The operator page asks for it once per browser |
+| `SESSION_SECRET` | Any long random string. Signs the session cookie. Without it the API picks a random one per boot and sessions reset on restart |
 | `SPORTS_CALLBACK_SECRET` | Any long random string. Shared by `api` and `mock-sportsbook` |
 | `ODDS_API_KEY` | Optional. Free key from <https://the-odds-api.com>. Without it the sportsbook uses built-in fixtures |
 | `PUBLIC_BASE_URL` | Your tunnel URL, for example `https://abc123.ngrok-free.app` |
@@ -109,6 +110,7 @@ The app is at <http://localhost:8000>. You still need the tunnel for BigBang and
 
 ## Try the money paths without any provider
 
+- **Provider health**: Operator → Health shows, per provider, the last 24 hours of callbacks, the last success and the last error, and average and p95 processing time.
 - **Chaos simulator**: Operator → Chaos → Run. It fires 200 signed BigBang-shaped callbacks at your own wallet with duplicates, reordering and delays. The report must show drift `0.00` and trial balance `0`.
 - **Sports bet**: Sports → pick a selection → Place bet. The mock settles it after `SETTLE_AFTER_SECS` (default 30) and sends a signed callback. Watch the balance move.
 - **Withdrawal**: Wallet → Request. The ledger reserves the money at once; the payment waits in `pending_review`.
@@ -144,9 +146,15 @@ migrations               sqlx migrations, applied on boot
 docs/adr                 architecture decision records
 ```
 
+## Status of the BigBang integration, stated plainly
+
+The catalog sync, the launch flow and the game embed work against the real BigBang sandbox. The seamless wallet callbacks do **not** arrive yet: BigBang runs sandbox sessions on its own synthetic 100,000 balance and, on this unfunded account, never called the registered `user_data` and `balance_change` URLs, with ngrok or with a Cloudflare tunnel, for 3 Oaks and PG Soft games alike. The portal shows "Features access: none, choose a plan", and BigBang support has been asked to enable seamless mode on the sandbox key.
+
+What is proven instead: the callback endpoints handle BigBang-shaped traffic end to end with signed requests. `scripts/smoke.sh` sends a signed win, a duplicate, a bad signature, and an oversized bet, and checks each reply. The chaos simulator sends hundreds of signed callbacks with duplicates, delays and reordering and checks that the ledger drift is zero. The reply contract (400 on a refused bet, 404 on an unknown player, `duplicate: true` on a replay) follows BigBang's published agent brief.
+
 ## Known limits
 
-- Auth is a demo: `X-Player-Id` and `X-Ops-Key` headers. A real platform puts sessions and roles here.
+- Login is a demo: a display name, no password. The session itself is real: an HttpOnly, SameSite cookie signed with HMAC-SHA256, and the operator role is granted to that session by `POST /api/ops/login` with `OPS_API_KEY`. Scripts can still send `X-Ops-Key` for operator routes.
 - Stripe withdrawals are a review queue, because paying out to a customer needs Stripe Connect.
 - BigBang's `user_data` callback carries no documented signature; it is a balance read and is served as such.
 - The `X-Body-Signature` header BigBang mentions is checked and logged on mismatch, not enforced, because its algorithm is not published.

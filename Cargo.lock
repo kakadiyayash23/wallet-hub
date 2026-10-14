@@ -42,6 +42,7 @@ dependencies = [
  "domain",
  "dotenvy",
  "futures-util",
+ "hex",
  "ledger",
  "provider-bigbang",
  "provider-sports",
