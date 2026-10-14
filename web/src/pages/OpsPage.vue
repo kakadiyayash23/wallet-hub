@@ -2,18 +2,25 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { api, ApiError } from '../api/client'
-import type { ChaosReport, EventStats, InboundEvent, Reconciliation, SourceHealth } from '../api/types'
+import type { ChaosReport, EventStats, InboundEvent, Reconciliation, SourceHealth, TimelineBucket } from '../api/types'
 import { formatDate, formatMinor } from '../lib/money'
 import { useSession } from '../stores/session'
+import { useToasts } from '../stores/toasts'
 import StatusChip from '../components/StatusChip.vue'
+import OpsChart from '../components/OpsChart.vue'
+import EventDrawer from '../components/EventDrawer.vue'
+import EmptyState from '../components/EmptyState.vue'
+import Skeleton from '../components/Skeleton.vue'
 
 const { t, locale } = useI18n()
 const session = useSession()
+const toasts = useToasts()
 const key = ref('')
-const tab = ref<'callbacks' | 'health' | 'reconcile' | 'chaos'>('callbacks')
+const tab = ref<'dashboard' | 'callbacks' | 'reconcile' | 'chaos'>('dashboard')
 const events = ref<InboundEvent[]>([])
 const stats = ref<EventStats | null>(null)
 const health = ref<SourceHealth[]>([])
+const timeline = ref<TimelineBucket[]>([])
 const selected = ref<InboundEvent | null>(null)
 const players = ref<{ id: string; external_token: string; display_name: string }[]>([])
 const playerId = ref('')
@@ -24,6 +31,7 @@ const chaosBad = ref(0)
 const chaosReport = ref<ChaosReport | null>(null)
 const error = ref('')
 const busy = ref(false)
+const loading = ref(false)
 const currency = 'EUR'
 
 onMounted(async () => {
@@ -44,25 +52,35 @@ async function login() {
 
 async function refresh() {
   error.value = ''
+  loading.value = true
   try {
-    stats.value = await api.get<EventStats>('/api/ops/events/stats')
-    events.value = await api.get<InboundEvent[]>('/api/ops/events?limit=100')
-    health.value = await api.get<SourceHealth[]>('/api/ops/health')
-    players.value = await api.get('/api/ops/players')
+    ;[stats.value, events.value, health.value, timeline.value, players.value] = await Promise.all([
+      api.get<EventStats>('/api/ops/events/stats'),
+      api.get<InboundEvent[]>('/api/ops/events?limit=100'),
+      api.get<SourceHealth[]>('/api/ops/health'),
+      api.get<TimelineBucket[]>('/api/ops/timeline'),
+      api.get<{ id: string; external_token: string; display_name: string }[]>('/api/ops/players'),
+    ])
     if (!playerId.value && players.value[0]) playerId.value = players.value[0].id
   } catch (e) {
     error.value = (e as Error).message
+  } finally {
+    loading.value = false
   }
 }
 
 async function replay(ev: InboundEvent) {
   busy.value = true
-  try { await api.post(`/api/ops/events/${ev.id}/replay`); await refresh() } catch (e) { error.value = (e as Error).message } finally { busy.value = false }
+  try {
+    const r = await api.post<{ status: number; body: unknown }>(`/api/ops/events/${ev.id}/replay`)
+    toasts.push(r.status < 300 ? 'ok' : 'warn', `${t('ops.replay')} → ${r.status}`)
+    await refresh()
+  } catch (e) { error.value = (e as Error).message } finally { busy.value = false }
 }
 
 async function sync() {
   busy.value = true
-  try { const r = await api.post<{ synced: number }>('/api/ops/catalog/sync'); error.value = `synced ${r.synced} games` } catch (e) { error.value = (e as Error).message } finally { busy.value = false }
+  try { const r = await api.post<{ synced: number }>('/api/ops/catalog/sync'); toasts.push('ok', `${t('ops.sync')}: ${r.synced}`) } catch (e) { error.value = (e as Error).message } finally { busy.value = false }
 }
 
 async function reconcile() {
@@ -75,11 +93,11 @@ async function chaos() {
   chaosReport.value = null
   try {
     chaosReport.value = await api.post<ChaosReport>('/api/ops/chaos', { player_id: playerId.value, rounds: chaosRounds.value, duplicate_every: chaosDup.value, bad_signature_every: chaosBad.value, max_delay_ms: 20, shuffle: true })
+    toasts.push(chaosReport.value.drift === 0 ? 'ok' : 'bad', `Chaos: drift ${formatMinor(chaosReport.value.drift, currency, locale.value)}`)
     await refresh()
   } catch (e) { error.value = (e as Error).message } finally { busy.value = false }
 }
 
-function pretty(body: string) { try { return JSON.stringify(JSON.parse(body), null, 2) } catch { return body } }
 const ms = (v: number | null) => (v == null ? '—' : Math.round(v).toString())
 const healthTone = (h: SourceHealth) => (h.errors_24h > 0 ? 'bad' : h.rejected_24h > 0 ? 'warn' : 'ok')
 </script>
@@ -106,41 +124,26 @@ const healthTone = (h: SourceHealth) => (h.errors_24h > 0 ? 'bad' : h.rejected_2
 
   <template v-if="session.ops">
     <div class="row" style="margin-bottom:12px">
+      <button :class="{ primary: tab === 'dashboard' }" @click="tab = 'dashboard'">{{ t('ops.dashboard') }}</button>
       <button :class="{ primary: tab === 'callbacks' }" @click="tab = 'callbacks'">{{ t('ops.callbacks') }}</button>
-      <button :class="{ primary: tab === 'health' }" @click="tab = 'health'">{{ t('ops.health') }}</button>
       <button :class="{ primary: tab === 'reconcile' }" @click="tab = 'reconcile'">{{ t('ops.reconcile') }}</button>
       <button :class="{ primary: tab === 'chaos' }" @click="tab = 'chaos'">{{ t('ops.chaos') }}</button>
     </div>
 
-    <template v-if="tab === 'callbacks'">
+    <!-- Dashboard -->
+    <template v-if="tab === 'dashboard'">
       <div v-if="stats" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:12px">
-        <div class="card"><div class="mono" style="font-size:22px">{{ stats.received }}</div><div class="muted">{{ t('ops.received') }}</div></div>
-        <div class="card"><div class="mono" style="font-size:22px">{{ stats.duplicates }}</div><div class="muted">{{ t('ops.duplicates') }}</div></div>
-        <div class="card"><div class="mono" style="font-size:22px">{{ stats.rejected }}</div><div class="muted">{{ t('ops.rejected') }}</div></div>
-        <div class="card"><div class="mono" style="font-size:22px">{{ stats.errors }}</div><div class="muted">{{ t('ops.errors') }}</div></div>
+        <div class="card"><div class="num" style="font-size:24px">{{ stats.received }}</div><div class="muted">{{ t('ops.received') }}</div></div>
+        <div class="card"><div class="num" style="font-size:24px">{{ stats.duplicates }}</div><div class="muted">{{ t('ops.duplicates') }}</div></div>
+        <div class="card"><div class="num" style="font-size:24px" :class="{ warn: stats.rejected > 0 }">{{ stats.rejected }}</div><div class="muted">{{ t('ops.rejected') }}</div></div>
+        <div class="card"><div class="num" style="font-size:24px" :class="{ neg: stats.errors > 0 }">{{ stats.errors }}</div><div class="muted">{{ t('ops.errors') }}</div></div>
       </div>
-      <div style="overflow-x:auto">
-        <table>
-          <thead><tr><th>Time</th><th>Source</th><th>Path</th><th>Sig</th><th>Outcome</th><th>ms</th><th>Detail</th><th></th></tr></thead>
-          <tbody>
-            <tr v-for="ev in events" :key="ev.id">
-              <td class="mono">{{ new Date(ev.received_at).toLocaleTimeString(locale) }}</td>
-              <td>{{ ev.source }}<small v-if="ev.replay_of" class="muted"> replay</small></td>
-              <td class="mono muted">{{ ev.path.split('?')[0].split('/').pop() }}</td>
-              <td><span v-if="ev.signature_ok === false" class="chip bad">bad</span><span v-else-if="ev.signature_ok" class="chip ok">ok</span></td>
-              <td><StatusChip :status="ev.outcome" /></td>
-              <td class="mono muted">{{ ev.duration_ms ?? '' }}</td>
-              <td class="muted" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ev.detail }}</td>
-              <td class="row"><button @click="selected = ev">{{ t('ops.view') }}</button><button :disabled="busy" @click="replay(ev)">{{ t('ops.replay') }}</button></td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="card" style="margin-bottom:12px">
+        <p class="sect" style="margin-top:0">{{ t('ops.timeline') }}</p>
+        <Skeleton v-if="loading && timeline.length === 0" height="160px" :count="1" />
+        <OpsChart v-else :buckets="timeline" />
       </div>
-      <pre v-if="selected">{{ selected.method }} {{ selected.path }}
-{{ pretty(selected.body) }}</pre>
-    </template>
-
-    <template v-if="tab === 'health'">
+      <p class="sect">{{ t('ops.health') }}</p>
       <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
         <div v-for="h in health" :key="h.source" class="card">
           <div class="row" style="justify-content:space-between">
@@ -157,7 +160,31 @@ const healthTone = (h: SourceHealth) => (h.errors_24h > 0 ? 'bad' : h.rejected_2
           <p v-if="h.last_error_detail" class="muted" style="font-size:12px;margin:6px 0 0">{{ h.last_error_detail }}</p>
         </div>
       </div>
-      <p v-if="health.length === 0" class="muted">—</p>
+      <EmptyState v-if="!loading && health.length === 0" :title="t('ops.noEvents')" :hint="t('ops.noEventsHint')" />
+    </template>
+
+    <!-- Callbacks -->
+    <template v-if="tab === 'callbacks'">
+      <Skeleton v-if="loading && events.length === 0" :count="6" />
+      <EmptyState v-else-if="events.length === 0" :title="t('ops.noEvents')" :hint="t('ops.noEventsHint')" />
+      <div v-else style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Time</th><th>Source</th><th>Path</th><th>Sig</th><th>Outcome</th><th>ms</th><th>Detail</th><th></th></tr></thead>
+          <tbody>
+            <tr v-for="ev in events" :key="ev.id" :class="{ sel: selected?.id === ev.id }" style="cursor:pointer" @click="selected = ev">
+              <td class="mono">{{ new Date(ev.received_at).toLocaleTimeString(locale) }}</td>
+              <td>{{ ev.source }}<small v-if="ev.replay_of" class="muted"> replay</small></td>
+              <td class="mono muted">{{ ev.path.split('?')[0].split('/').pop() }}</td>
+              <td><span v-if="ev.signature_ok === false" class="chip bad">bad</span><span v-else-if="ev.signature_ok" class="chip ok">ok</span></td>
+              <td><StatusChip :status="ev.outcome" /></td>
+              <td class="mono muted">{{ ev.duration_ms ?? '' }}</td>
+              <td class="muted" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ev.detail }}</td>
+              <td><button :disabled="busy" @click.stop="replay(ev)">{{ t('ops.replay') }}</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <EventDrawer v-if="selected" :event="selected" @close="selected = null" />
     </template>
 
     <template v-if="tab === 'reconcile'">
@@ -166,9 +193,9 @@ const healthTone = (h: SourceHealth) => (h.errors_24h > 0 ? 'bad' : h.rejected_2
         <button class="primary" :disabled="busy || !playerId" @click="reconcile">{{ t('ops.run') }}</button>
       </div>
       <div v-if="recon" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
-        <div class="card"><div class="mono" style="font-size:20px">{{ formatMinor(recon.provider_net, currency, locale) }}</div><div class="muted">{{ t('ops.providerSays') }} · {{ recon.provider_rows }} rows</div></div>
-        <div class="card"><div class="mono" style="font-size:20px">{{ formatMinor(recon.ledger_net, currency, locale) }}</div><div class="muted">{{ t('ops.ledgerSays') }} · {{ recon.env }}</div></div>
-        <div class="card"><div class="mono" style="font-size:20px" :class="recon.drift === 0 ? 'pos' : 'neg'">{{ formatMinor(recon.drift, currency, locale) }}</div><div class="muted">{{ t('ops.drift') }}</div></div>
+        <div class="card"><div class="num" style="font-size:20px">{{ formatMinor(recon.provider_net, currency, locale) }}</div><div class="muted">{{ t('ops.providerSays') }} · {{ recon.provider_rows }} rows</div></div>
+        <div class="card"><div class="num" style="font-size:20px">{{ formatMinor(recon.ledger_net, currency, locale) }}</div><div class="muted">{{ t('ops.ledgerSays') }} · {{ recon.env }}</div></div>
+        <div class="card"><div class="num" style="font-size:20px" :class="recon.drift === 0 ? 'pos' : 'neg'">{{ formatMinor(recon.drift, currency, locale) }}</div><div class="muted">{{ t('ops.drift') }}</div></div>
       </div>
     </template>
 
@@ -183,10 +210,10 @@ const healthTone = (h: SourceHealth) => (h.errors_24h > 0 ? 'bad' : h.rejected_2
         </div>
       </div>
       <div v-if="chaosReport" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
-        <div class="card"><div class="mono" style="font-size:20px">{{ chaosReport.sent }}</div><div class="muted">callbacks sent · {{ chaosReport.elapsed_ms }} ms</div></div>
-        <div class="card"><div class="mono" style="font-size:20px">{{ chaosReport.duplicates_rejected }} / {{ chaosReport.duplicates_sent }}</div><div class="muted">duplicates ignored</div></div>
-        <div class="card"><div class="mono" style="font-size:20px">{{ chaosReport.bad_signatures_rejected }} / {{ chaosReport.bad_signatures_sent }}</div><div class="muted">bad signatures rejected</div></div>
-        <div class="card"><div class="mono" style="font-size:20px" :class="chaosReport.drift === 0 ? 'pos' : 'neg'">{{ formatMinor(chaosReport.drift, currency, locale) }}</div><div class="muted">ledger drift · trial balance {{ chaosReport.trial_balance }}</div></div>
+        <div class="card"><div class="num" style="font-size:20px">{{ chaosReport.sent }}</div><div class="muted">callbacks sent · {{ chaosReport.elapsed_ms }} ms</div></div>
+        <div class="card"><div class="num" style="font-size:20px">{{ chaosReport.duplicates_rejected }} / {{ chaosReport.duplicates_sent }}</div><div class="muted">duplicates ignored</div></div>
+        <div class="card"><div class="num" style="font-size:20px">{{ chaosReport.bad_signatures_rejected }} / {{ chaosReport.bad_signatures_sent }}</div><div class="muted">bad signatures rejected</div></div>
+        <div class="card"><div class="num" style="font-size:20px" :class="chaosReport.drift === 0 ? 'pos' : 'neg'">{{ formatMinor(chaosReport.drift, currency, locale) }}</div><div class="muted">ledger drift · trial balance {{ chaosReport.trial_balance }}</div></div>
       </div>
     </template>
   </template>
@@ -194,4 +221,6 @@ const healthTone = (h: SourceHealth) => (h.errors_24h > 0 ? 'bad' : h.rejected_2
 
 <style scoped>
 .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin-top: 8px; font-size: 13px; }
+.warn { color: var(--warn); }
+tr.sel td { background: var(--surface-2); }
 </style>
